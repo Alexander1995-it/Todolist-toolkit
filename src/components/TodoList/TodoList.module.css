@@ -1,0 +1,12 @@
+.todoListBlock {
+    padding: 10px 30px;
+}
+
+.title__delete {
+    display: flex;
+}
+
+.listTodo {
+    max-height: 300px;
+    overflow: auto;
+}

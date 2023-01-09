@@ -1,0 +1,11 @@
+.loginBlock {
+    display: flex;
+}
+
+.loginText {
+    margin-right: 10px;
+}
+
+.loginIcon {
+   cursor: pointer;
+}
