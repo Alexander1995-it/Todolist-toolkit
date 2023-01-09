@@ -6,6 +6,8 @@ import {ThunkAction, ThunkDispatch} from "redux-thunk";
 import thunkMiddleware from 'redux-thunk'
 import {AppActionsType, appReducer} from "../reducers/appReducer";
 import {LoginActionType, authReducer} from "../reducers/authReducer";
+import {configureStore} from "@reduxjs/toolkit";
+
 
 const rootReducer = combineReducers({
     app: appReducer,
@@ -14,7 +16,13 @@ const rootReducer = combineReducers({
     auth: authReducer
 })
 
-export const store = legacy_createStore(rootReducer, applyMiddleware(thunkMiddleware))
+// export const store = legacy_createStore(rootReducer, applyMiddleware(thunkMiddleware))
+
+export const store = configureStore({
+    reducer: rootReducer,
+    middleware: (getDefaultMiddleware) => getDefaultMiddleware().prepend(thunkMiddleware)
+})
+
 
 export type AppRootStateType = ReturnType<typeof rootReducer>
 
