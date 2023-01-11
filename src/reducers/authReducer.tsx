@@ -3,6 +3,9 @@ import {AppThunk} from "../store/store";
 import axios, {AxiosError} from "axios/index";
 import {setAppError, setAppStatus, setInitializedStatusAC} from "./appReducer";
 import {handlerServerAppError} from "../common/utils/errorUtils";
+import {createSlice, PayloadAction} from "@reduxjs/toolkit";
+import {Dispatch} from "redux";
+
 
 const initialState = {
     id: null as null | number,
@@ -11,34 +14,38 @@ const initialState = {
     isLoggedIn: false
 }
 
-export const authReducer = (state: StateAuthType = initialState, action: LoginActionType): StateAuthType => {
-    switch (action.type) {
-        case 'SET_AUTH_ME': {
-            return {...state, ...action.data, isLoggedIn: action.isLoggedIn}
+const slice = createSlice({
+    name: 'auth',
+    initialState: initialState,
+    reducers: {
+        setAuthMeAC(state, action: PayloadAction<{ value: { id: number | null, email: string | null, login: string | null }, isLoggedIn: boolean }>) {
+            state.isLoggedIn = action.payload.isLoggedIn
+            state.id = action.payload.value.id
+            state.login = action.payload.value.login
+            state.email = action.payload.value.email
+        },
+        setLoggedInAC(state, action: PayloadAction<{ isLoggedIn: boolean }>) {
+            state.isLoggedIn = action.payload.isLoggedIn
         }
-        case 'IS_LOGGED_IN': {
-            return {...state, isLoggedIn: action.isLoggedIn}
-        }
-        default:
-            return state
     }
-}
+})
+
+export const authReducer = slice.reducer
+export const {setAuthMeAC, setLoggedInAC} = slice.actions
+
 
 //type
 type StateAuthType = typeof initialState
-export type LoginActionType = ReturnType<typeof setAuthMeAC> | ReturnType<typeof setLoggedInAC>
 
-//action
-const setAuthMeAC = (data: AuthMeResponse, isLoggedIn: boolean) => ({type: 'SET_AUTH_ME', data, isLoggedIn} as const)
-export const setLoggedInAC = (isLoggedIn: boolean) => ({type: 'IS_LOGGED_IN', isLoggedIn} as const)
 
 //thunk
-export const AuthMeTC = (): AppThunk => async (dispatch) => {
+export const AuthMeTC = () => async (dispatch: Dispatch) => {
     try {
         let response = await authApi.authMe()
         if (response.data.resultCode === ResponseResultCode.OK) {
             // dispatch(setLoggedInAC(true))
-            dispatch(setAuthMeAC(response.data.data, true))
+            dispatch(setAuthMeAC({value: response.data.data, isLoggedIn: true}))
+            // dispatch(setAuthMeAC(response.data.data, true))
         } else {
             handlerServerAppError(dispatch, response.data)
         }
@@ -49,19 +56,21 @@ export const AuthMeTC = (): AppThunk => async (dispatch) => {
             const error = err.response?.data
                 ? (err.response.data as { error: string }).error
                 : err.message
-            dispatch(setAppError(error))
+            dispatch(setAppError({error}))
         }
     } finally {
-        dispatch(setInitializedStatusAC(true))
+        dispatch(setInitializedStatusAC({value: true}))
     }
 }
 
-export const LoginTC = (data: LoginRequestType): AppThunk => async (dispatch) => {
-    dispatch(setAppStatus('loading'))
+export const LoginTC = (data: LoginRequestType) => async (dispatch: Dispatch) => {
+    dispatch(setAppStatus({status: 'loading'}))
     try {
         let response = await authApi.login(data)
         if (response.data.resultCode === ResponseResultCode.OK) {
-            dispatch(setLoggedInAC(true))
+            // dispatch(AuthMeTC())
+            dispatch(setLoggedInAC({isLoggedIn: true}))
+            dispatch(setAuthMeAC({value: {id: null, email: null, login: null}, isLoggedIn: true}))
         } else {
             handlerServerAppError(dispatch, response.data)
         }
@@ -71,19 +80,19 @@ export const LoginTC = (data: LoginRequestType): AppThunk => async (dispatch) =>
             const error = err.response?.data
                 ? (err.response.data as { error: string }).error
                 : err.message
-            dispatch(setAppError(error))
+            dispatch(setAppError({error}))
         }
     } finally {
-        dispatch(setAppStatus('succeeded'))
+        dispatch(setAppStatus({status: 'succeeded'}))
     }
 }
 
-export const logoutTC = (): AppThunk => async (dispatch) => {
-    dispatch(setAppStatus('loading'))
+export const logoutTC = () => async (dispatch: Dispatch) => {
+    dispatch(setAppStatus({status: 'loading'}))
     try {
         let response = await authApi.logout()
         if (response.data.resultCode === 0) {
-            dispatch(setLoggedInAC(false))
+            dispatch(setLoggedInAC({isLoggedIn: false}))
         } else {
             handlerServerAppError(dispatch, response.data)
         }
@@ -93,10 +102,10 @@ export const logoutTC = (): AppThunk => async (dispatch) => {
             const error = err.response?.data
                 ? (err.response.data as { error: string }).error
                 : err.message
-            dispatch(setAppError(error))
+            dispatch(setAppError({error}))
         }
     } finally {
-        dispatch(setAppStatus('succeeded'))
+        dispatch(setAppStatus({status: 'succeeded'}))
     }
 
 }
