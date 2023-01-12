@@ -26,9 +26,9 @@ export const TodoList = (props: PropsType) => {
     let tasks = useAppSelector<TaskType[]>(state => state.tasks[props.todoList.id])
 
 //handlerFilter
-    const onAllClickHandler = () => dispatch(changeFilterAC(props.todoList.id, "all"));
-    const onActiveClickHandler = () => dispatch(changeFilterAC(props.todoList.id, "active"));
-    const onCompletedClickHandler = () => dispatch(changeFilterAC(props.todoList.id, "completed"));
+    const onAllClickHandler = () => dispatch(changeFilterAC({todolistID: props.todoList.id, filter: "all"}));
+    const onActiveClickHandler = () => dispatch(changeFilterAC({todolistID: props.todoList.id, filter: "active"}));
+    const onCompletedClickHandler = () => dispatch(changeFilterAC({todolistID: props.todoList.id, filter: "completed"}));
 
     const onClickDeleteTodoList = () => dispatch(deleteTodolistsTC(props.todoList.id))
 
