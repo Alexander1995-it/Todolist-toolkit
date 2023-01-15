@@ -12,7 +12,7 @@ import {TodoListsActionType, todolistsReducer} from "../reducers/todoListsReduce
 const rootReducer = combineReducers({
     app: appReducer,
     tasks: tasksReducer,
-    todoLists: todolistsReducer,
+    todolists: todolistsReducer,
     auth: authReducer
 })
 

@@ -10,7 +10,7 @@ import style from './TodoLists.module.css'
 
 const TodoLists = () => {
 
-    let todoLists = useAppSelector<Array<TodolistDomainType>>(state => state.todoLists)
+    let todoLists = useAppSelector<Array<TodolistDomainType>>(state => state.todolists)
     const isLoggedIn = useAppSelector(state => state.auth.isLoggedIn)
 
     const dispatch = useAppDispatch()

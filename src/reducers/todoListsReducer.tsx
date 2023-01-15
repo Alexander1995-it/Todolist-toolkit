@@ -10,7 +10,7 @@ import {Dispatch} from "redux";
 const initialState: Array<TodolistDomainType> = []
 
 const slice = createSlice({
-    name: 'todoLists',
+    name: 'todolists',
     initialState: initialState,
     reducers: {
         removeTodoListAC(state, action: PayloadAction<{ todolistID: string }>) {
