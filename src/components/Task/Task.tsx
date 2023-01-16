@@ -18,7 +18,7 @@ const Task = React.memo(({task, todolistId}: TaskPropsType) => {
     const editTaskHandler = (todolistId: string, taskID: string, newTitle: string) => {
         dispatch(updateTitleTC(todolistId, taskID, newTitle))
     }
-    const onHandlerDelete = () => dispatch(removeTaskTC(todolistId, task.id))
+    const onHandlerDelete = () => dispatch(removeTaskTC({todolistId, taskId: task.id}))
     const onChangeHandler = (e: ChangeEvent<HTMLInputElement>) => {
         let newIsDoneValue = e.currentTarget.checked
         dispatch(updateStatusTC(todolistId, task.id, newIsDoneValue ? TaskStatuses.Completed : TaskStatuses.New))

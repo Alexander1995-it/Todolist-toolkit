@@ -1,6 +1,6 @@
 
 import {v1} from "uuid";
-import {addTaskAC, removeTaskAC, tasksReducer, TasksStateType, updateTaskAC} from "../tasksReducer";
+import {addTaskAC, removeTaskTC, tasksReducer, TasksStateType, updateTaskAC} from "../tasksReducer";
 import {TaskStatuses} from "../../api/todolistsApi";
 
 let startState: TasksStateType
@@ -81,7 +81,8 @@ beforeEach(() => {
 
 test('correct task should be removed', () => {
 
-    const endState = tasksReducer(startState, removeTaskAC({todolistId: todolistID2, taskId: '1'}))
+    const action = removeTaskTC.fulfilled({todolistId: todolistID2, taskId: '1'}, 'requestId', {todolistId: todolistID2, taskId: '1'})
+    const endState = tasksReducer(startState, action)
 
     expect(endState[todolistID2].length).toBe(2)
     expect(endState[todolistID2][0].title).toBe('task2')
