@@ -33,7 +33,7 @@ export const TodoList = (props: PropsType) => {
     const onClickDeleteTodoList = () => dispatch(deleteTodolistsTC(props.todoList.id))
 
     const addTaskHandler = (newTitle: string) => {
-        dispatch(createTaskTC(props.todoList.id, newTitle))
+        dispatch(createTaskTC({todolistId: props.todoList.id, title: newTitle}))
     }
 
     if (props.todoList.filter === "active") {
