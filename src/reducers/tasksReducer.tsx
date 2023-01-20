@@ -13,12 +13,6 @@ const slice = createSlice({
     name: 'tasks',
     initialState: initialState,
     reducers: {
-        // setTasksAC(state, action: PayloadAction<{ todolistId: string, tasks: TaskType[] }>) {
-        //     state[action.payload.todolistId] = action.payload.tasks
-        // },
-        // addTaskAC(state, action: PayloadAction<{ todolistId: string, task: TaskType }>) {
-        //     state[action.payload.todolistId].unshift(action.payload.task)
-        // },
         // removeTaskAC(state, action: PayloadAction<{ todolistId: string, taskId: string }>) {
         //     const tasks = state[action.payload.todolistId]
         //     const index = tasks.findIndex(task => task.id === action.payload.taskId)
@@ -59,146 +53,115 @@ const slice = createSlice({
 export const tasksReducer = slice.reducer
 export const {updateTaskAC} = slice.actions
 
-export const createTaskTC = createAsyncThunk('tasks/createTask', async (params: {todolistId: string, title: string}, thunkAPI) => {
+export const fetchTasksTC = createAsyncThunk('tasks/fetchTasks', async (todolistId: string, thunkAPI) => {
+    thunkAPI.dispatch(setAppStatus({status: 'loading'}))
+    try {
+        let response = await tasksAPI.getTasks(todolistId)
+        const tasks = response.data.items
+        return {todolistId, tasks}
+    } catch (e) {
+        let err = e as AxiosError | Error
+        if (axios.isAxiosError(err)) {
+            const error = err.response?.data
+                ? (err.response.data as { error: string }).error
+                : err.message
+            thunkAPI.dispatch(setAppError({error}))
+        }
+        return thunkAPI.rejectWithValue({})
+    } finally {
+        thunkAPI.dispatch(setAppStatus({status: 'succeeded'}))
+    }
+})
+
+export const createTaskTC = createAsyncThunk('tasks/createTask', async (params: { todolistId: string, title: string }, thunkAPI) => {
     thunkAPI.dispatch(setAppStatus({status: 'loading'}))
     try {
         const response = await tasksAPI.addTask(params.todolistId, params.title)
         if (response.data.resultCode === 0) {
-           console.log ( thunkAPI.getState())
+            console.log(thunkAPI.getState())
             const task = response.data.data.item
             return {todolistId: params.todolistId, task}
-                } else {
+        } else {
             handlerServerAppError(thunkAPI.dispatch, response.data)
             const task = response.data.data.item
-            return thunkAPI.rejectWithValue( {todolistId: params.todolistId, task})
+            return thunkAPI.rejectWithValue({})
 
         }
-   } catch (e) {
-        return thunkAPI.rejectWithValue( {todolistId: params.todolistId, task: {}})
-   } finally {
-
-   }
-
-
-
-    // try {
-    //     const response = await tasksAPI.addTask(todolistId, title)
-    //     const task = response.data.data.item
-    //     if (response.data.resultCode === 0) {
-    //         dispatch(addTaskAC({todolistId, task}))
-    //     } else {
-    //         handlerServerAppError(dispatch, response.data)
-    //     }
-    // } catch (e) {
-    //     let err = e as AxiosError | Error
-    //     if (axios.isAxiosError(err)) {
-    //         const error = err.response?.data
-    //             ? (err.response.data as { error: string }).error
-    //             : err.message
-    //         dispatch(setAppError({error}))
-    //     }
-    //
-    // } finally {
-    //     dispatch(setAppStatus({status: 'succeeded'}))
-    // }
+    } catch (e) {
+        return thunkAPI.rejectWithValue({})
+    } finally {
+        thunkAPI.dispatch(setAppStatus({status: 'succeeded'}))
+    }
 })
 
-export const createTaskTC_ = (todolistId: string, title: string): AppThunk => async (dispatch) => {
-    // dispatch(setAppStatus({status: 'loading'}))
-    // try {
-    //     const response = await tasksAPI.addTask(todolistId, title)
-    //     const task = response.data.data.item
-    //     if (response.data.resultCode === 0) {
-    //         dispatch(addTaskAC({todolistId, task}))
-    //     } else {
-    //         handlerServerAppError(dispatch, response.data)
-    //     }
-    // } catch (e) {
-    //     let err = e as AxiosError | Error
-    //     if (axios.isAxiosError(err)) {
-    //         const error = err.response?.data
-    //             ? (err.response.data as { error: string }).error
-    //             : err.message
-    //         dispatch(setAppError({error}))
-    //     }
-    //
-    // } finally {
-    //     dispatch(setAppStatus({status: 'succeeded'}))
-    // }
-
-}
-
-export const fetchTasksTC = createAsyncThunk('tasks/fetchTasks', async (todolistId: string, thunkAPI) => {
-    const response = await tasksAPI.getTasks(todolistId)
-    const tasks = response.data.items
-    return {todolistId, tasks}
-
-    // try {
-    //     let response = await tasksAPI.getTasks(todolistId)
-    //     thunkAPI.dispatch(setTasksAC({todolistId, tasks: response.data.items}))
-    // } catch (e) {
-    //     let err = e as AxiosError | Error
-    //     if (axios.isAxiosError(err)) {
-    //         const error = err.response?.data
-    //             ? (err.response.data as { error: string }).error
-    //             : err.message
-    //         thunkAPI.dispatch(setAppError({error}))
-    //     }
-    // }
-})
 
 export const removeTaskTC = createAsyncThunk('tasks/removeTask', async (param: { todolistId: string, taskId: string }, thunkAPI) => {
-    return await tasksAPI.removeTask(param.todolistId, param.taskId)
-        .then(response => {
+    thunkAPI.dispatch(setAppStatus({status: 'loading'}))
+    try {
+        const response = await tasksAPI.removeTask(param.todolistId, param.taskId)
+        if (response.data.resultCode === 0) {
             return {todolistId: param.todolistId, taskId: param.taskId}
-        })
+        } else {
+            if (response.data.messages.length) {
+                thunkAPI.dispatch(setAppError({error: response.data.messages[0]}))
+            } else {
+                thunkAPI.dispatch(setAppError({error: 'Some error'}))
+            }
+            return thunkAPI.rejectWithValue({})
+        }
+    } catch (e) {
+        let err = e as AxiosError | Error
+        if (axios.isAxiosError(err)) {
+            const error = err.response?.data
+                ? (err.response.data as { error: string }).error
+                : err.message
+            thunkAPI.dispatch(setAppError({error}))
+        }
+        return thunkAPI.rejectWithValue({})
+    } finally {
+        thunkAPI.dispatch(setAppStatus({status: 'succeeded'}))
+    }
+
 })
 
-// export const removeTaskTC_ = (todolistId: string, taskId: string): AppThunk => async (dispatch) => {
-//     dispatch(setAppStatus({status: 'loading'}))
-//     try {
-//         const response = await tasksAPI.removeTask(todolistId, taskId)
-//         if (response.data.resultCode === 0) {
-//             dispatch(removeTaskAC({todolistId, taskId}))
-//         } else {
-//             if (response.data.messages.length) {
-//                 dispatch(setAppError({error: response.data.messages[0]}))
-//             } else {
-//                 dispatch(setAppError({error: 'Some error'}))
-//             }
-//         }
-//     } catch (e) {
-//         let err = e as AxiosError | Error
-//         if (axios.isAxiosError(err)) {
-//             const error = err.response?.data
-//                 ? (err.response.data as { error: string }).error
-//                 : err.message
-//             dispatch(setAppError({error}))
-//         }
-//     } finally {
-//         dispatch(setAppStatus({status: 'succeeded'}))
-//     }
-//
-// }
 
 
-//thunks
-// export const fetchTasksTC = (todolistId: string): AppThunk => async (dispatch) => {
-//     try {
-//         let response = await tasksAPI.getTasks(todolistId)
-//         dispatch(setTasksAC({todolistId, tasks: response.data.items}))
-//     } catch (e) {
-//         let err = e as AxiosError | Error
-//         if (axios.isAxiosError(err)) {
-//             const error = err.response?.data
-//                 ? (err.response.data as { error: string }).error
-//                 : err.message
-//             dispatch(setAppError({error}))
-//         }
-//     }
-//
-// }
-
+export const updateTitleTC = (todolistId: string, taskId: string, title: string): AppThunk => async (dispatch, getState: () => AppRootStateType) => {
+    const task = getState().tasks[todolistId].find(t => t.id === taskId)
+    if (task) {
+        const model: UpdateTaskModelType = {
+            description: task.description,
+            priority: task.priority,
+            startDate: task.startDate,
+            deadline: task.deadline,
+            status: task.status,
+            title
+        }
+        dispatch(setAppStatus({status: 'loading'}))
+        try {
+            const response = await tasksAPI.updateTask(todolistId, taskId, model)
+            if (response.data.resultCode === ResponseStatusCode.success) {
+                dispatch(updateTaskAC({todolistId, taskId, model}))
+            } else {
+                if (response.data.messages.length) {
+                    dispatch(setAppError({error: response.data.messages[0]}))
+                } else {
+                    dispatch(setAppError({error: 'Some error'}))
+                }
+            }
+        } catch (e) {
+            let err = e as AxiosError | Error
+            if (axios.isAxiosError(err)) {
+                const error = err.response?.data
+                    ? (err.response.data as { error: string }).error
+                    : err.message
+                dispatch(setAppError({error}))
+            }
+        } finally {
+            dispatch(setAppStatus({status: 'succeeded'}))
+        }
+    }
+}
 
 export const updateStatusTC = (todolistId: string, taskId: string, status: TaskStatuses): AppThunk => async (dispatch, getState: () => AppRootStateType) => {
 
@@ -239,44 +202,6 @@ export const updateStatusTC = (todolistId: string, taskId: string, status: TaskS
 
     }
 }
-
-export const updateTitleTC = (todolistId: string, taskId: string, title: string): AppThunk => async (dispatch, getState: () => AppRootStateType) => {
-    const task = getState().tasks[todolistId].find(t => t.id === taskId)
-    if (task) {
-        const model: UpdateTaskModelType = {
-            description: task.description,
-            priority: task.priority,
-            startDate: task.startDate,
-            deadline: task.deadline,
-            status: task.status,
-            title
-        }
-        dispatch(setAppStatus({status: 'loading'}))
-        try {
-            const response = await tasksAPI.updateTask(todolistId, taskId, model)
-            if (response.data.resultCode === ResponseStatusCode.success) {
-                dispatch(updateTaskAC({todolistId, taskId, model}))
-            } else {
-                if (response.data.messages.length) {
-                    dispatch(setAppError({error: response.data.messages[0]}))
-                } else {
-                    dispatch(setAppError({error: 'Some error'}))
-                }
-            }
-        } catch (e) {
-            let err = e as AxiosError | Error
-            if (axios.isAxiosError(err)) {
-                const error = err.response?.data
-                    ? (err.response.data as { error: string }).error
-                    : err.message
-                dispatch(setAppError({error}))
-            }
-        } finally {
-            dispatch(setAppStatus({status: 'succeeded'}))
-        }
-    }
-}
-
 
 // enum
 enum ResponseStatusCode {

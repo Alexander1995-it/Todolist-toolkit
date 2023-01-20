@@ -1,5 +1,4 @@
-import {authApi, AuthMeResponse, LoginRequestType, ResponseResultCode} from "../api/todolistsApi";
-import {AppThunk} from "../store/store";
+import {authApi, LoginRequestType, ResponseResultCode} from "../api/todolistsApi";
 import axios, {AxiosError} from "axios/index";
 import {setAppError, setAppStatus, setInitializedStatusAC} from "./appReducer";
 import {handlerServerAppError} from "../common/utils/errorUtils";
@@ -32,7 +31,7 @@ const slice = createSlice({
         builder.addCase(logoutTC.fulfilled, (state, action) => {
             state.isLoggedIn = action.payload.isLoggedIn
         })
-        builder.addCase(logoutTC.fulfilled, (state, action) => {
+        builder.addCase(LoginTC.fulfilled, (state, action) => {
             state.isLoggedIn = action.payload.isLoggedIn
         })
     }
@@ -50,6 +49,7 @@ export const LoginTC = createAsyncThunk('auth/login', async (param: LoginRequest
             return {isLoggedIn: true}
         } else {
             handlerServerAppError(thunkAPI.dispatch, response.data)
+            return thunkAPI.rejectWithValue({})
         }
     } catch (e) {
         let err = e as AxiosError | Error
@@ -59,6 +59,7 @@ export const LoginTC = createAsyncThunk('auth/login', async (param: LoginRequest
                 : err.message
             thunkAPI.dispatch(setAppError({error}))
         }
+        return thunkAPI.rejectWithValue({})
     } finally {
         thunkAPI.dispatch(setAppStatus({status: 'succeeded'}))
     }
@@ -78,7 +79,7 @@ export const logoutTC = createAsyncThunk('auth/logout', async (param, thunkAPI) 
             return {isLoggedIn: false}
         } else {
             handlerServerAppError(thunkAPI.dispatch, response.data)
-            return thunkAPI.rejectWithValue({isLoggedIn: false})
+            return thunkAPI.rejectWithValue({})
 
 
         }
@@ -93,41 +94,15 @@ export const logoutTC = createAsyncThunk('auth/logout', async (param, thunkAPI) 
         return thunkAPI.rejectWithValue({isLoggedIn: true})
     } finally {
         thunkAPI.dispatch(setAppStatus({status: 'succeeded'}))
-
     }
 })
-
-export const logoutTC_ = () => async (dispatch: Dispatch) => {
-    dispatch(setAppStatus({status: 'loading'}))
-    try {
-        let response = await authApi.logout()
-        if (response.data.resultCode === 0) {
-            dispatch(setLoggedInAC({isLoggedIn: false}))
-        } else {
-            handlerServerAppError(dispatch, response.data)
-        }
-    } catch (e) {
-        let err = e as AxiosError | Error
-        if (axios.isAxiosError(err)) {
-            const error = err.response?.data
-                ? (err.response.data as { error: string }).error
-                : err.message
-            dispatch(setAppError({error}))
-        }
-    } finally {
-        dispatch(setAppStatus({status: 'succeeded'}))
-    }
-
-}
 
 
 export const AuthMeTC = () => async (dispatch: Dispatch) => {
     try {
         let response = await authApi.authMe()
         if (response.data.resultCode === ResponseResultCode.OK) {
-            // dispatch(setLoggedInAC(true))
             dispatch(setAuthMeAC({value: response.data.data, isLoggedIn: true}))
-            // dispatch(setAuthMeAC(response.data.data, true))
         } else {
             handlerServerAppError(dispatch, response.data)
         }
