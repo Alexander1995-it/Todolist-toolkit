@@ -1,7 +1,7 @@
 import React, {ChangeEvent} from 'react';
 import {Checkbox} from "@mui/material";
 import {EditableSpan} from "../../common/EtidTitle/EtidTitle";
-import {removeTaskTC, updateStatusTC, updateTitleTC} from "../../reducers/tasksReducer";
+import {removeTaskTC, updateTaskTC} from "../../reducers/tasksReducer";
 import {TaskStatuses, TaskType} from "../../api/todolistsApi";
 import {useAppDispatch} from "../../common/hooks/hooks";
 
@@ -14,13 +14,17 @@ export type TaskPropsType = {
 const Task = React.memo(({task, todolistId}: TaskPropsType) => {
     const dispatch = useAppDispatch()
 
-    const editTaskHandler = (todolistId: string, taskID: string, newTitle: string) => {
-        dispatch(updateTitleTC(todolistId, taskID, newTitle))
+    const editTaskHandler = (todolistId: string, taskId: string, newTitle: string) => {
+        dispatch(updateTaskTC({todolistId, taskId, model: {title: newTitle}}))
     }
     const onHandlerDelete = () => dispatch(removeTaskTC({todolistId, taskId: task.id}))
     const onChangeHandler = (e: ChangeEvent<HTMLInputElement>) => {
         let newIsDoneValue = e.currentTarget.checked
-        dispatch(updateStatusTC(todolistId, task.id, newIsDoneValue ? TaskStatuses.Completed : TaskStatuses.New))
+        dispatch(updateTaskTC({
+            todolistId,
+            taskId: task.id,
+            model: {status: newIsDoneValue ? TaskStatuses.Completed : TaskStatuses.New}
+        }))
     }
 
     return (

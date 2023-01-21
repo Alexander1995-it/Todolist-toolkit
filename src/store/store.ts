@@ -1,6 +1,5 @@
 import {combineReducers} from "redux";
 import {tasksReducer} from "../reducers/tasksReducer";
-import {TasksActionType} from '../reducers/tasksReducer'
 import {ThunkAction, ThunkDispatch} from "redux-thunk";
 import thunkMiddleware from 'redux-thunk'
 import {AppActionsType, appReducer} from "../reducers/appReducer";
@@ -25,7 +24,7 @@ export const store = configureStore({
 
 export type AppRootStateType = ReturnType<typeof rootReducer>
 
-export type AppActionType = TodoListsActionType | TasksActionType | AppActionsType
+export type AppActionType = TodoListsActionType | AppActionsType
 
 // export type AppDispatch = typeof store.dispatch
 

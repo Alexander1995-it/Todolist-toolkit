@@ -1,9 +1,8 @@
 import {authApi, LoginRequestType, ResponseResultCode} from "../api/todolistsApi";
 import axios, {AxiosError} from "axios/index";
-import {setAppError, setAppStatus, setInitializedStatusAC} from "./appReducer";
+import {setAppError, setAppStatus} from "./appReducer";
 import {handlerServerAppError} from "../common/utils/errorUtils";
 import {createAsyncThunk, createSlice, PayloadAction} from "@reduxjs/toolkit";
-import {Dispatch} from "redux";
 
 
 const initialState = {
@@ -38,7 +37,7 @@ const slice = createSlice({
 })
 
 export const authReducer = slice.reducer
-export const {setAuthMeAC, setLoggedInAC} = slice.actions
+export const {setAuthMeAC} = slice.actions
 
 export const LoginTC = createAsyncThunk('auth/login', async (param: LoginRequestType, thunkAPI) => {
     thunkAPI.dispatch(setAppStatus({status: 'loading'}))
@@ -98,27 +97,7 @@ export const logoutTC = createAsyncThunk('auth/logout', async (param, thunkAPI) 
 })
 
 
-export const AuthMeTC = () => async (dispatch: Dispatch) => {
-    try {
-        let response = await authApi.authMe()
-        if (response.data.resultCode === ResponseResultCode.OK) {
-            dispatch(setAuthMeAC({value: response.data.data, isLoggedIn: true}))
-        } else {
-            handlerServerAppError(dispatch, response.data)
-        }
 
-    } catch (e) {
-        let err = e as AxiosError | Error
-        if (axios.isAxiosError(err)) {
-            const error = err.response?.data
-                ? (err.response.data as { error: string }).error
-                : err.message
-            dispatch(setAppError({error}))
-        }
-    } finally {
-        dispatch(setInitializedStatusAC({value: true}))
-    }
-}
 
 
 

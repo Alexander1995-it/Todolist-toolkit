@@ -2,13 +2,12 @@ import React, {useEffect} from 'react';
 import './App.css';
 import {useAppDispatch, useAppSelector} from "./common/hooks/hooks";
 import LinearProgress from '@mui/material/LinearProgress';
-import {RequestStatusType} from "./reducers/appReducer";
+import {initializedAppTC, RequestStatusType} from "./reducers/appReducer";
 import CustomizedSnackbars from "./common/ErrorSnacbar/ErrorSnacbar";
 import Header from "./components/Header/Header";
 import TodoLists from "./components/TodoLists/TodoLists";
 import {Navigate, Route, Routes} from "react-router-dom";
 import {LoginPage} from "./components/Login/LoginPage";
-import {AuthMeTC} from "./reducers/authReducer";
 import {CircularProgress} from "@mui/material";
 
 const App = () => {
@@ -16,11 +15,10 @@ const App = () => {
     const status = useAppSelector<RequestStatusType>(state => state.app.status)
     const isInitialized = useAppSelector(state => state.app.isInitialized)
 
-
     const dispatch = useAppDispatch()
 
     useEffect(() => {
-        dispatch(AuthMeTC())
+        dispatch(initializedAppTC())
     }, [])
     if (!isInitialized) {
         return <div

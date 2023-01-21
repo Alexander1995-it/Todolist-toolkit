@@ -1,4 +1,5 @@
 import axios, {AxiosResponse} from "axios";
+import {UpdateTaskModelType} from "../reducers/tasksReducer";
 
 
 const incstanse = axios.create({
@@ -90,16 +91,6 @@ export type TaskType = {
     order: number
     addedDate: string
 }
-
-export type UpdateTaskModelType = {
-    title: string
-    description: string
-    status: TaskStatuses
-    priority: TaskPriorities
-    startDate: string
-    deadline: string
-}
-
 
 //typesTodolist
 export type TodolistType = {

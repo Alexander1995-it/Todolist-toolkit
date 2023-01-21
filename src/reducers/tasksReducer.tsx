@@ -1,29 +1,18 @@
 import React from 'react';
-import {tasksAPI, TaskStatuses, TaskType, UpdateTaskModelType} from "../api/todolistsApi";
-import {AppActionType, AppRootStateType, AppThunk} from "../store/store";
+import {TaskPriorities, tasksAPI, TaskStatuses, TaskType} from "../api/todolistsApi";
+import {AppRootStateType} from "../store/store";
 import {setAppError, setAppStatus} from "./appReducer";
 import axios, {AxiosError} from "axios/index";
 import {handlerServerAppError} from "../common/utils/errorUtils";
 import {createAsyncThunk, createSlice, PayloadAction} from "@reduxjs/toolkit";
-import {addTodoListAC, removeTodoListAC, setTodolistsAC} from "./todoListsReducer";
+import {addTodoListAC, fetchTodolistsTC, removeTodoListAC} from "./todoListsReducer";
 
 const initialState: TasksStateType = {}
 
 const slice = createSlice({
     name: 'tasks',
     initialState: initialState,
-    reducers: {
-        // removeTaskAC(state, action: PayloadAction<{ todolistId: string, taskId: string }>) {
-        //     const tasks = state[action.payload.todolistId]
-        //     const index = tasks.findIndex(task => task.id === action.payload.taskId)
-        //     tasks.splice(index, 1)
-        // },
-        updateTaskAC(state, action: PayloadAction<{ todolistId: string, taskId: string, model: UpdateTaskModelType }>) {
-            const tasks = state[action.payload.todolistId]
-            const index = tasks.findIndex(task => task.id === action.payload.taskId)
-            tasks[index] = {...tasks[index], ...action.payload.model}
-        }
-    },
+    reducers: {},
     extraReducers: (builder) => {
         builder.addCase(addTodoListAC, (state, action) => {
             state[action.payload.newTodolist.id] = []
@@ -31,7 +20,7 @@ const slice = createSlice({
         builder.addCase(removeTodoListAC, (state, action) => {
             delete state[action.payload.todolistID]
         })
-        builder.addCase(setTodolistsAC, (state, action) => {
+        builder.addCase(fetchTodolistsTC.fulfilled, (state, action) => {
             action.payload.todolists.forEach(todolist => {
                 state[todolist.id] = []
             })
@@ -47,11 +36,60 @@ const slice = createSlice({
         builder.addCase(createTaskTC.fulfilled, (state, action) => {
             state[action.payload.todolistId].unshift(action.payload.task)
         })
+        builder.addCase(updateTaskTC.fulfilled, (state, action) => {
+            const tasks = state[action.payload.todolistId]
+            const index = tasks.findIndex(task => task.id === action.payload.taskId)
+            tasks[index] = {...tasks[index], ...action.payload.model}
+        })
     }
 })
 
 export const tasksReducer = slice.reducer
-export const {updateTaskAC} = slice.actions
+export const {} = slice.actions
+
+export const updateTaskTC = createAsyncThunk('tasks/updateTitle', async (param: { todolistId: string, taskId: string, model: UpdateTaskModelType }, thunkAPI) => {
+    const state = thunkAPI.getState() as AppRootStateType
+    const task = state.tasks[param.todolistId].find(t => t.id === param.taskId)
+    if (!task) {
+        return thunkAPI.rejectWithValue({})
+    }
+    const model: UpdateTaskModelType = {
+        description: task.description,
+        priority: task.priority,
+        startDate: task.startDate,
+        deadline: task.deadline,
+        status: task.status,
+        title: task.title,
+        ...param.model
+    }
+    thunkAPI.dispatch(setAppStatus({status: 'loading'}))
+    try {
+        const response = await tasksAPI.updateTask(param.todolistId, param.taskId, model)
+        if (response.data.resultCode === ResponseStatusCode.success) {
+            return {todolistId: param.todolistId, taskId: param.taskId, model}
+        } else {
+            if (response.data.messages.length) {
+                thunkAPI.dispatch(setAppError({error: response.data.messages[0]}))
+            } else {
+                thunkAPI.dispatch(setAppError({error: 'Some error'}))
+            }
+            return thunkAPI.rejectWithValue({})
+        }
+
+    } catch (e) {
+        let err = e as AxiosError | Error
+        if (axios.isAxiosError(err)) {
+            const error = err.response?.data
+                ? (err.response.data as { error: string }).error
+                : err.message
+            thunkAPI.dispatch(setAppError({error}))
+        }
+        return thunkAPI.rejectWithValue({})
+    } finally {
+        thunkAPI.dispatch(setAppStatus({status: 'succeeded'}))
+    }
+})
+
 
 export const fetchTasksTC = createAsyncThunk('tasks/fetchTasks', async (todolistId: string, thunkAPI) => {
     thunkAPI.dispatch(setAppStatus({status: 'loading'}))
@@ -124,85 +162,6 @@ export const removeTaskTC = createAsyncThunk('tasks/removeTask', async (param: {
 
 })
 
-
-
-export const updateTitleTC = (todolistId: string, taskId: string, title: string): AppThunk => async (dispatch, getState: () => AppRootStateType) => {
-    const task = getState().tasks[todolistId].find(t => t.id === taskId)
-    if (task) {
-        const model: UpdateTaskModelType = {
-            description: task.description,
-            priority: task.priority,
-            startDate: task.startDate,
-            deadline: task.deadline,
-            status: task.status,
-            title
-        }
-        dispatch(setAppStatus({status: 'loading'}))
-        try {
-            const response = await tasksAPI.updateTask(todolistId, taskId, model)
-            if (response.data.resultCode === ResponseStatusCode.success) {
-                dispatch(updateTaskAC({todolistId, taskId, model}))
-            } else {
-                if (response.data.messages.length) {
-                    dispatch(setAppError({error: response.data.messages[0]}))
-                } else {
-                    dispatch(setAppError({error: 'Some error'}))
-                }
-            }
-        } catch (e) {
-            let err = e as AxiosError | Error
-            if (axios.isAxiosError(err)) {
-                const error = err.response?.data
-                    ? (err.response.data as { error: string }).error
-                    : err.message
-                dispatch(setAppError({error}))
-            }
-        } finally {
-            dispatch(setAppStatus({status: 'succeeded'}))
-        }
-    }
-}
-
-export const updateStatusTC = (todolistId: string, taskId: string, status: TaskStatuses): AppThunk => async (dispatch, getState: () => AppRootStateType) => {
-
-    dispatch(setAppStatus({status: 'loading'}))
-
-    const task = getState().tasks[todolistId].find(t => t.id === taskId)
-    if (task) {
-        const model: UpdateTaskModelType = {
-            title: task.title,
-            description: task.description,
-            priority: task.priority,
-            startDate: task.startDate,
-            deadline: task.deadline,
-            status
-        }
-        try {
-            const response = await tasksAPI.updateTask(todolistId, taskId, model)
-            if (response.data.resultCode === ResponseStatusCode.success) {
-                dispatch(updateTaskAC({todolistId, taskId, model}))
-            } else {
-                if (response.data.messages.length) {
-                    dispatch(setAppError({error: response.data.messages[0]}))
-                } else {
-                    dispatch(setAppError({error: 'Some error'}))
-                }
-            }
-        } catch (e) {
-            let err = e as AxiosError | Error
-            if (axios.isAxiosError(err)) {
-                const error = err.response?.data
-                    ? (err.response.data as { error: string }).error
-                    : err.message
-                dispatch(setAppError({error}))
-            }
-        } finally {
-            dispatch(setAppStatus({status: 'succeeded'}))
-        }
-
-    }
-}
-
 // enum
 enum ResponseStatusCode {
     success = 0,
@@ -215,7 +174,14 @@ export type TasksStateType = {
     [key: string]: Array<TaskType>
 }
 
-export type TasksActionType =
-    | ReturnType<typeof updateTaskAC>
+
+export type UpdateTaskModelType = {
+    title?: string
+    description?: string
+    status?: TaskStatuses
+    priority?: TaskPriorities
+    startDate?: string
+    deadline?: string
+}
 
 

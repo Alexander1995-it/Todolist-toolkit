@@ -110,28 +110,29 @@ test('correct title of task should be changed', () => {
 
 })
 
-// test('correct task should be added', () => {
-//
-//     const newTask = {
-//         description: '',
-//         title: 'learn JS',
-//         status: TaskStatuses.New,
-//         priority: 1,
-//         startDate: '',
-//         deadline: '',
-//         id: '4',
-//         todoListId: todolistID2,
-//         order: 1,
-//         addedDate: ''
-//     }
-//     const action = createTaskTC.fulfilled({todolistId: todolistID2,task: newTask}, 'requestId', {todolistId: todolistID2, task: newTask})
-//     const endState = tasksReducer(startState, action)
-//
-//     expect(endState[todolistID1].length).toBe(2)
-//     expect(endState[todolistID2].length).toBe(4)
-//     expect(endState[todolistID2][0].title).toBe('learn JS')
-//     expect(endState[todolistID2][1].title).toBe('task1')
-// })
+test('correct task should be added', () => {
+
+    const newTask = {
+        description: '',
+        title: 'learn JS',
+        status: TaskStatuses.New,
+        priority: 1,
+        startDate: '',
+        deadline: '',
+        id: '4',
+        todoListId: todolistID2,
+        order: 1,
+        addedDate: ''
+    }
+
+    const  action = createTaskTC.fulfilled ({todolistId: todolistID2,task: newTask}, 'requestId', { todolistId: todolistID2, title: newTask.title })
+    const endState = tasksReducer(startState, action)
+
+    expect(endState[todolistID1].length).toBe(2)
+    expect(endState[todolistID2].length).toBe(4)
+    expect(endState[todolistID2][0].title).toBe('learn JS')
+    expect(endState[todolistID2][1].title).toBe('task1')
+})
 
 test('correct status of task should be changed', () => {
 
