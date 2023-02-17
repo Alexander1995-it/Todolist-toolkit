@@ -14,12 +14,13 @@ const App = () => {
 
     const status = useAppSelector<RequestStatusType>(state => state.app.status)
     const isInitialized = useAppSelector(state => state.app.isInitialized)
+    const isLoggedIn = useAppSelector(state => state.auth.isLoggedIn)
 
     const dispatch = useAppDispatch()
 
     useEffect(() => {
         dispatch(initializedAppTC())
-    }, [])
+    }, [isLoggedIn])
     if (!isInitialized) {
         return <div
             style={{position: 'fixed', top: '30%', textAlign: 'center', width: '100%'}}>

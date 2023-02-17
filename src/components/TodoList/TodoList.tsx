@@ -16,7 +16,7 @@ type PropsType = {
     title: string
 }
 
-export const TodoList = (props: PropsType) => {
+export const TodoList = React.memo ((props: PropsType) => {
 
     let dispatch = useAppDispatch()
 
@@ -72,4 +72,4 @@ export const TodoList = (props: PropsType) => {
 
         </div>
     </div>
-}
+})

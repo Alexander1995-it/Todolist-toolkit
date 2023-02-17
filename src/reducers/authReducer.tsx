@@ -37,14 +37,14 @@ const slice = createSlice({
 })
 
 export const authReducer = slice.reducer
-export const {setAuthMeAC} = slice.actions
+export const {setAuthMeAC, setLoggedInAC} = slice.actions
 
 export const LoginTC = createAsyncThunk('auth/login', async (param: LoginRequestType, thunkAPI) => {
     thunkAPI.dispatch(setAppStatus({status: 'loading'}))
     try {
         let response = await authApi.login(param)
         if (response.data.resultCode === ResponseResultCode.OK) {
-            thunkAPI.dispatch(setAuthMeAC({value: {id: null, email: null, login: null}, isLoggedIn: true}))
+            thunkAPI.dispatch(setLoggedInAC({isLoggedIn: true}))
             return {isLoggedIn: true}
         } else {
             handlerServerAppError(thunkAPI.dispatch, response.data)
@@ -64,9 +64,6 @@ export const LoginTC = createAsyncThunk('auth/login', async (param: LoginRequest
     }
 })
 
-
-//type
-type StateAuthType = typeof initialState
 
 //thunk
 

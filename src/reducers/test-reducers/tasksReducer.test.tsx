@@ -108,7 +108,6 @@ test('correct title of task should be changed', () => {
     expect(endState[todolistID2][0].title).toBe('newTitle')
     expect(endState[todolistID2][1].title).toBe('task2')
 
-
 })
 
 test('correct task should be added', () => {
